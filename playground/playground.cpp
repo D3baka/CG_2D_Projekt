@@ -3,6 +3,8 @@
 // Include standard headers
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
+#include <cassert>
 
 // Include GLFW
 #include <glfw3.h>
@@ -13,9 +15,19 @@ GLFWwindow* window;
 using namespace glm;
 
 #include <common/shader.hpp>
+#include "parse_stl.h"
+
 
 int main(void)
 {
+    
+
+
+
+
+
+
+    
     //Initialize window
     bool windowInitialized = initializeWindow();
     if (!windowInitialized) return -1;
@@ -23,6 +35,10 @@ int main(void)
     //Initialize vertex buffer
     bool vertexbufferInitialized = initializeVertexbuffer();
     if (!vertexbufferInitialized) return -1;
+
+    //Initialize color buffer
+    bool colorbufferInitialized = initializeColorbuffer();
+    if (!colorbufferInitialized) return -1;
 
     glEnable(GL_DEPTH_TEST);
 
@@ -52,6 +68,32 @@ int main(void)
     return 0;
 }
 
+void parseStl(std::vector< glm::vec3 >& vertices,
+    std::vector< glm::vec3 >& normals,
+    std::string stl_file_name)
+{
+    stl::stl_data info = stl::parse_stl(stl_file_name);
+    std::vector<stl::triangle> triangles = info.triangles;
+    for (int i = 0; i < info.triangles.size(); i++) {
+        stl::triangle t = info.triangles.at(i);
+        glm::vec3 triangleNormal = glm::vec3(t.normal.x,
+            t.normal.y,
+            t.normal.z);
+        //add vertex and normal for point 1:
+        vertices.push_back(glm::vec3(t.v1.x, t.v1.y, t.v1.z));
+        normals.push_back(triangleNormal);
+        //add vertex and normal for point 2:
+        vertices.push_back(glm::vec3(t.v2.x, t.v2.y, t.v2.z));
+        normals.push_back(triangleNormal);
+        //add vertex and normal for point 3:
+        vertices.push_back(glm::vec3(t.v3.x, t.v3.y, t.v3.z));
+        normals.push_back(triangleNormal);
+    }
+}
+
+
+
+
 void updateAnimationLoop()
 {
     // Clear the screen
@@ -73,20 +115,50 @@ void updateAnimationLoop()
 
     // 1rst attribute buffer : vertices
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
     glVertexAttribPointer(
         0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-        3,  // size
+        3,                  // size
         GL_FLOAT,           // type
         GL_FALSE,           // normalized?
         0,                  // stride
         (void*)0            // array buffer offset
     );
 
+
+    //2nd attribute buffer : color
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        0,
+        (void*)0
+    );
+
+    // 3rd attribute buffer : normals
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);
+    glVertexAttribPointer(
+        1,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
+        3,                  // size
+        GL_FLOAT,           // type
+        GL_FALSE,           // normalized?
+        0,                  // stride
+        (void*)0            // array buffer offset
+    );
+
+
+
+
+    
     // Draw the triangle !
     glDrawArrays(GL_TRIANGLES, 0, vertexbuffer_size * 3); // 3 indices starting at 0 -> 1 triangle
 
     glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 
     // Swap buffers
     glfwSwapBuffers(window);
@@ -176,58 +248,79 @@ bool initializeVertexbuffer()
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
 
-    vertexbuffer_size = 12;
-    static const GLfloat g_vertex_buffer_data[] = {
-      -1.0f,-1.0f,-1.0f, // triangle 1 : begin
-      -1.0f,-1.0f, 1.0f,
-      -1.0f, 1.0f, 1.0f, // triangle 1 : end
-      1.0f, 1.0f,-1.0f, // triangle 2 : begin
-      -1.0f,-1.0f,-1.0f,
-      -1.0f, 1.0f,-1.0f, // triangle 2 : end
-      1.0f,-1.0f, 1.0f,
-      -1.0f,-1.0f,-1.0f,
-      1.0f,-1.0f,-1.0f,
-      1.0f, 1.0f,-1.0f,
-      1.0f,-1.0f,-1.0f,
-      -1.0f,-1.0f,-1.0f,
-      -1.0f,-1.0f,-1.0f,
-      -1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f,-1.0f,
-      1.0f,-1.0f, 1.0f,
-      -1.0f,-1.0f, 1.0f,
-      -1.0f,-1.0f,-1.0f,
-      -1.0f, 1.0f, 1.0f,
-      -1.0f,-1.0f, 1.0f,
-      1.0f,-1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f,-1.0f,-1.0f,
-      1.0f, 1.0f,-1.0f,
-      1.0f,-1.0f,-1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f,-1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f,-1.0f,
-      -1.0f, 1.0f,-1.0f,
-      1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f,-1.0f,
-      -1.0f, 1.0f, 1.0f,
-      1.0f, 1.0f, 1.0f,
-      -1.0f, 1.0f, 1.0f,
-      1.0f,-1.0f, 1.0f
-    };
+    //create vertex and normal data
+    std::vector< glm::vec3 > vertices = std::vector< glm::vec3 >();
+    std::vector< glm::vec3 > normals = std::vector< glm::vec3 >();
+    parseStl(vertices, normals, "../res/teapot.stl");
+    vertexbuffer_size = vertices.size() * sizeof(glm::vec3);
 
-    glGenBuffers(1, &vertexbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    glGenBuffers(2, vertexbuffer); //generate two buffers, one for the vertices, one for the normals
+
+    //fill first buffer (vertices)
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    //fill second buffer (normals)
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     return true;
 }
 
+bool initializeColorbuffer()
+{
+    //create color data
+	std::vector< glm::vec3 > colors = std::vector< glm::vec3 >();
+    std::vector< glm::vec3 > vertices = std::vector< glm::vec3 >();
+    std::vector< glm::vec3 > normals = std::vector< glm::vec3 >();
+    parseStl(vertices, normals, "../res/teapot.stl");
+    vertexbuffer_size = vertices.size() * sizeof(glm::vec3);
+    int colorbuffer_size = vertexbuffer_size * 3;
+
+    for (int i = 0; i < colorbuffer_size; i += 9) {
+        switch (rand() % 3) {
+        case 0:
+			colors.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+			break;
+		case 1:
+			colors.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+			break;
+		case 2:
+			colors.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+			break;
+        }
+    }
+    
+    //fill colorbuffer
+    glDeleteBuffers(1, &colorbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+    glBufferData(GL_ARRAY_BUFFER, colorbuffer_size, &colors[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  
+
+
+
+    return true;
+}
+
+
+
 bool cleanupVertexbuffer()
 {
     // Cleanup VBO
-    glDeleteBuffers(1, &vertexbuffer);
     glDeleteVertexArrays(1, &VertexArrayID);
+    return true;
+}
+
+bool cleanupColorbuffer()
+{
+    // Cleanup VBO
+    glDeleteBuffers(1, &colorbuffer);
     return true;
 }
 
