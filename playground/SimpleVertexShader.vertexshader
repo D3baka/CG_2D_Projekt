@@ -1,27 +1,27 @@
-#version 330 core
-
+#version 450 core
 // Input vertex data, different for all executions of this shader.
 layout(location = 0) in vec3 vertexPosition_modelspace;
 layout(location = 1) in vec3 vertexNormal_modelspace;
-layout(location = 2) in vec3 colorIn;
 
 // Values that stay constant for the whole mesh.
 uniform mat4 MVP;
-
-out vec3 fragmentColor;
-
+uniform mat4 M;
+//Output variables
+out vec3 fColor;
+out vec3 fNormal;
+out vec3 fCameraPos;
+out vec3 fLightDir;
+out vec4 fPosition;
 
 void main(){
 
-	// Output position of the vertex, in clip space : MVP * position
+	fLightDir = vec3(1,0,0);
+	fNormal = normalize(vertexNormal_modelspace);
+	fColor = vec3(1, 1, 1);
+	fCameraPos = vec3(32, 80, -40);
+	
 	gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
-
-	vec4 lightOrigin = vec4(10.0,10.0,50.0,1.0);
-	vec4 position = vec4(vertexPosition_modelspace,1.0);
-	float distance = distance(lightOrigin,gl_Position);
-	float factor = 1.0;
-
-	fragmentColor = colorIn;
-    
-    
+	
+	fPosition = M * vec4(vertexPosition_modelspace,1);
+	
 }

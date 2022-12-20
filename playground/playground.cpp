@@ -1,4 +1,4 @@
-#include "playground.h"
+ï»¿#include "playground.h"
 
 // Include standard headers
 #include <stdio.h>
@@ -20,14 +20,6 @@ using namespace glm;
 
 int main(void)
 {
-    
-
-
-
-
-
-
-    
     //Initialize window
     bool windowInitialized = initializeWindow();
     if (!windowInitialized) return -1;
@@ -36,9 +28,6 @@ int main(void)
     bool vertexbufferInitialized = initializeVertexbuffer();
     if (!vertexbufferInitialized) return -1;
 
-    //Initialize color buffer
-    bool colorbufferInitialized = initializeColorbuffer();
-    if (!colorbufferInitialized) return -1;
 
     glEnable(GL_DEPTH_TEST);
 
@@ -48,7 +37,7 @@ int main(void)
     initializeMVPTransformation();
 
     curr_x = 0;
-    curr_y = 0;
+    curr_y = -10.0f;
 
     //start animation loop until escape key is pressed
     do {
@@ -72,7 +61,6 @@ void parseStl(std::vector< glm::vec3 >& vertices,
     std::vector< glm::vec3 >& normals,
     std::string stl_file_name)
 {
-	std::cout << "Parsing STL file: " << stl_file_name << std::endl;
     stl::stl_data info = stl::parse_stl(stl_file_name);
     std::vector<stl::triangle> triangles = info.triangles;
     for (int i = 0; i < info.triangles.size(); i++) {
@@ -103,16 +91,17 @@ void updateAnimationLoop()
     // Use our shader
     glUseProgram(programID);
 
-    if (glfwGetKey(window, GLFW_KEY_W)) curr_y += 0.01;
-    else if (glfwGetKey(window, GLFW_KEY_S)) curr_y -= 0.01;
-    else if (glfwGetKey(window, GLFW_KEY_A)) curr_x -= 0.01;
-    else if (glfwGetKey(window, GLFW_KEY_D)) curr_x += 0.01;
+    if (glfwGetKey(window, GLFW_KEY_W)) curr_y += 0.11;
+    else if (glfwGetKey(window, GLFW_KEY_S)) curr_y -= 0.11;
+    else if (glfwGetKey(window, GLFW_KEY_A)) curr_x -= 0.11;
+    else if (glfwGetKey(window, GLFW_KEY_D)) curr_x += 0.11;
     else if (glfwGetKey(window, GLFW_KEY_R)) curr_angle += 0.01;
     initializeMVPTransformation();
 
     // Send our transformation to the currently bound shader, 
     // in the "MVP" uniform
     glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glUniformMatrix4fv(MatrixIDM, 1, GL_FALSE, &M[0][0]);
 
     // 1rst attribute buffer : vertices
     glEnableVertexAttribArray(0);
@@ -126,10 +115,7 @@ void updateAnimationLoop()
         (void*)0            // array buffer offset
     );
 
-
-    
-
-    // 2nd attribute buffer : normals
+    // 3rd attribute buffer : normals
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);
     glVertexAttribPointer(
@@ -141,20 +127,10 @@ void updateAnimationLoop()
         (void*)0            // array buffer offset
     );
 
-    //3rd attribute buffer : color
-    glEnableVertexAttribArray(2);
-    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-    glVertexAttribPointer(
-        1,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        0,
-        (void*)0
-    );
 
 
-    
+
+
     // Draw the triangle !
     glDrawArrays(GL_TRIANGLES, 0, vertexbuffer_size * 3); // 3 indices starting at 0 -> 1 triangle
 
@@ -215,13 +191,15 @@ bool initializeMVPTransformation()
     GLuint MatrixIDnew = glGetUniformLocation(programID, "MVP");
     MatrixID = MatrixIDnew;
 
+    MatrixIDM = glGetUniformLocation(programID, "M");
 
-    // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-    glm::mat4 Projection = glm::perspective(glm::radians(60.0f), 4.0f / 3.0f, 0.001f, 10000.0f);
+
+    // Projection matrix : 45ï¿½ Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 500.0f);
     //glm::mat4 Projection = glm::frustum(-2.0f, 2.0f, -2.0f, 2.0f, -2.0f, 2.0f);
     // Camera matrix
     glm::mat4 View = glm::lookAt(
-        glm::vec3(-40,0,0), // Camera is at (4,3,-3), in World Space
+        glm::vec3(32, 80, -40), // Camera is at (4,3,-3), in World Space
         glm::vec3(0, 0, 0), // and looks at the origin
         glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
@@ -238,7 +216,7 @@ bool initializeMVPTransformation()
 
     // Our ModelViewProjection : multiplication of our 3 matrices
     MVP = Projection * View * Model * transformation; // Remember, matrix multiplication is the other way around
-
+    M = Model * transformation;
 
     return true;
 
@@ -252,10 +230,10 @@ bool initializeVertexbuffer()
     //create vertex and normal data
     std::vector< glm::vec3 > vertices = std::vector< glm::vec3 >();
     std::vector< glm::vec3 > normals = std::vector< glm::vec3 >();
-    parseStl(vertices, normals, "../res/Bunny-LowPoly.stl");
+    parseStl(vertices, normals, "../stlFiles/Bunny-LowPoly.stl");
     vertexbuffer_size = vertices.size() * sizeof(glm::vec3);
-    //std::cout << "vertexbuffer_size in iV: " << vertexbuffer_size << std::endl;
 
+    // print normals to console
 
     glGenBuffers(2, vertexbuffer); //generate two buffers, one for the vertices, one for the normals
 
@@ -272,58 +250,9 @@ bool initializeVertexbuffer()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     return true;
+
 }
 
-bool initializeColorbuffer()
-{
-    //create color data
-	std::vector< glm::vec3 > colors = std::vector< glm::vec3 >();
-    std::vector< glm::vec3 > vertices = std::vector< glm::vec3 >();
-    std::vector< glm::vec3 > normals = std::vector< glm::vec3 >();
-    parseStl(vertices, normals, "../res/Bunny-LowPoly.stl");
-    vertexbuffer_size = vertices.size() * sizeof(glm::vec3);
-    int colorbuffer_size = vertexbuffer_size * 3;
-    
-	//std::cout << "vertexbuffer_size in iC: " << vertexbuffer_size << std::endl;
-
-    
-    for (int i = 0; i < vertexbuffer_size; i++) {
-        switch (rand() % 3) {
-        case 0:
-			colors.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
-            colors.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
-            colors.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
-			break;
-		case 1:
-			colors.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
-            colors.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
-            colors.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
-			break;
-		case 2:
-			colors.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-            colors.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-            colors.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-
-			break;
-        }
-    }
-    
-   
-    //fill colorbuffer
-    glDeleteBuffers(1, &colorbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-    glBufferData(GL_ARRAY_BUFFER, colorbuffer_size, &colors[0], GL_STATIC_DRAW);
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  
-    //print all colors in the buffer
-	//for (int i = 0; i < colorbuffer_size; i ++) {
-	//	std::cout << colors[i].x << " " << colors[i].y << " " << colors[i].z << std::endl;
-	//}
-
-
-    return true;
-}
 
 
 
@@ -346,4 +275,3 @@ bool closeWindow()
     glfwTerminate();
     return true;
 }
-
