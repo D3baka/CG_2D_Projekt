@@ -1,6 +1,10 @@
 #version 330 core
 
 // Ouput data
+layout(location=0) out vec4 fragColor;
+
+//input data
+
 
 in vec3 fColor;
 in vec3 fNormal;
@@ -11,24 +15,28 @@ in vec4 fPosition;
 void main()
 {
 
-	// Output color = red
-	float dotProduct = dot(fNormal, fLightDir);
-	vec3 lightedCol = vec3(fColor.x - dotProduct, fColor.y - dotProduct, fColor.z - dotProduct);
+	 // Output color = red
+    float dotProduct = dot(fNormal, fLightDir);
+    vec3 lightedCol = vec3(fColor.x - dotProduct, fColor.y - dotProduct, fColor.z - dotProduct);
 
-	vec3 cameraToFrag = vec3(fCameraPos.x - fPosition.x, fCameraPos.y - fPosition.y, fCameraPos.z - fPosition.z);
-	vec3 cameraToFragN = normalize(cameraToFrag);
-	
-	float outlineDotProduct = dot(cameraToFragN, fNormal);
-	vec3 outlineCol = vec3(1.0, 0.0, 0.0);
+    vec3 cameraToFrag = vec3(fCameraPos.x - fPosition.x, fCameraPos.y - fPosition.y, fCameraPos.z - fPosition.z);
+    vec3 cameraToFragN = normalize(cameraToFrag);
 
-	
-	/*if(outlineDotProduct > 0.3)
-		outlineDotProduct = 1.0;
-	else
-		outlineDotProduct = 0.0;*/
+    float outlineDotProduct = dot(cameraToFragN, fNormal);
+    //lightedCol = vec3(1,1,1);
+    vec3 outlineCol = vec3(1.0, 0.0, 0.0);
 
-	gl_FragColor = vec4(lightedCol * outlineDotProduct + outlineCol * (1 - outlineDotProduct), 1);	
 
-	//gl_FragColor = vec4(outlineCol, 1);
+
+    //outlineDotProduct = 1.0f;
+    /*
+    if(outlineDotProduct > 0.3)
+        outlineDotProduct = 1.0;
+    else
+        outlineDotProduct = 0.0;*/
+
+    fragColor = vec4(lightedCol * outlineDotProduct + outlineCol * (1 - outlineDotProduct), 1);
+
+    //fragColor = vec4(outlineCol, 1);
 
 }

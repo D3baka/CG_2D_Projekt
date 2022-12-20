@@ -199,7 +199,7 @@ bool initializeMVPTransformation()
     //glm::mat4 Projection = glm::frustum(-2.0f, 2.0f, -2.0f, 2.0f, -2.0f, 2.0f);
     // Camera matrix
     glm::mat4 View = glm::lookAt(
-        glm::vec3(32, 80, -40), // Camera is at (4,3,-3), in World Space
+        glm::vec3(32, 0, 0), // Camera is at (4,3,-3), in World Space
         glm::vec3(0, 0, 0), // and looks at the origin
         glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
@@ -230,7 +230,7 @@ bool initializeVertexbuffer()
     //create vertex and normal data
     std::vector< glm::vec3 > vertices = std::vector< glm::vec3 >();
     std::vector< glm::vec3 > normals = std::vector< glm::vec3 >();
-    parseStl(vertices, normals, "../stlFiles/Bunny-LowPoly.stl");
+    parseStl(vertices, normals, "../res/bunny-decimated.stl");
     vertexbuffer_size = vertices.size() * sizeof(glm::vec3);
 
     // print normals to console
