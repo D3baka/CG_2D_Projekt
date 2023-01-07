@@ -36,8 +36,8 @@ int main(void)
 
     initializeMVPTransformation();
 
-    curr_x = 0;
-    curr_y = -10.0f;
+    curr_x = 0.0f;
+    curr_y = 0.0f;
 
     //start animation loop until escape key is pressed
     do {
@@ -91,11 +91,11 @@ void updateAnimationLoop()
     // Use our shader
     glUseProgram(programID);
 
-    if (glfwGetKey(window, GLFW_KEY_W)) curr_y += 0.11;
+    /*if (glfwGetKey(window, GLFW_KEY_W)) curr_y += 0.11;
     else if (glfwGetKey(window, GLFW_KEY_S)) curr_y -= 0.11;
     else if (glfwGetKey(window, GLFW_KEY_A)) curr_x -= 0.11;
     else if (glfwGetKey(window, GLFW_KEY_D)) curr_x += 0.11;
-    else if (glfwGetKey(window, GLFW_KEY_R)) curr_angle += 0.01;
+    else */if (glfwGetKey(window, GLFW_KEY_R)) curr_angle += 0.01;
     initializeMVPTransformation();
 
     // Send our transformation to the currently bound shader, 
@@ -195,27 +195,31 @@ bool initializeMVPTransformation()
 
 
     // Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 500.0f);
+    glm::mat4 Projection = glm::perspective(glm::radians(90.0f), 16.0f / 9.0f, 0.1f, 500.0f);
     //glm::mat4 Projection = glm::frustum(-2.0f, 2.0f, -2.0f, 2.0f, -2.0f, 2.0f);
     // Camera matrix
     glm::mat4 View = glm::lookAt(
-        glm::vec3(32, 0, 0), // Camera is at (4,3,-3), in World Space
+        glm::vec3(5, 0, 0), // Camera is at (4,3,-3), in World Space
         glm::vec3(0, 0, 0), // and looks at the origin
         glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
+	
     // Model matrix : an identity matrix (model will be at the origin)
     glm::mat4 Model = glm::mat4(1.0f);
+    float fix_angle = -1.5708;
+    Model = glm::rotate(Model, fix_angle , glm::vec3(1.0f, 0.0f, 0.0f));
 
-    Model = glm::rotate(Model, curr_angle, glm::vec3(0.0f, 1.0f, 1.0f));
-
+    Model = glm::rotate(Model, curr_angle, glm::vec3(0.0f, 0.0f, 1.0f));
     glm::mat4 transformation;//additional transformation for the model
+	
     transformation[0][0] = 1.0; transformation[1][0] = 0.0; transformation[2][0] = 0.0; transformation[3][0] = curr_x;
     transformation[0][1] = 0.0; transformation[1][1] = 1.0; transformation[2][1] = 0.0; transformation[3][1] = curr_y;
     transformation[0][2] = 0.0; transformation[1][2] = 0.0; transformation[2][2] = 1.0; transformation[3][2] = 0.0;
     transformation[0][3] = 0.0; transformation[1][3] = 0.0; transformation[2][3] = 0.0; transformation[3][3] = 1.0;
 
     // Our ModelViewProjection : multiplication of our 3 matrices
-    MVP = Projection * View * Model * transformation; // Remember, matrix multiplication is the other way around
+	
+    MVP = Projection * View * transformation * Model ; // Remember, matrix multiplication is the other way around
     M = Model * transformation;
 
     return true;
@@ -230,7 +234,7 @@ bool initializeVertexbuffer()
     //create vertex and normal data
     std::vector< glm::vec3 > vertices = std::vector< glm::vec3 >();
     std::vector< glm::vec3 > normals = std::vector< glm::vec3 >();
-    parseStl(vertices, normals, "../res/bunny-decimated.stl");
+    parseStl(vertices, normals, "../res/127mm.stl");
     vertexbuffer_size = vertices.size() * sizeof(glm::vec3);
 
     // print normals to console
