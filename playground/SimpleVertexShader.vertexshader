@@ -15,11 +15,11 @@ out vec4 fPosition;
 
 void main(){
 
-    fLightDir = vec3(1,0,0);
+    fLightDir = vec3(-1,0,0);
 
     vec4 normalM = M * vec4(vertexNormal_modelspace, 0);
     fNormal = normalize(normalM.xyz);
-    fColor = vec3(0, 0, 0.2);
+    fColor = vec3(0, 1, 0);
     fCameraPos = vec3(32, 80, -40);
 
     gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
