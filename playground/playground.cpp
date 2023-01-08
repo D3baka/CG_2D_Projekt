@@ -91,11 +91,10 @@ void updateAnimationLoop()
     // Use our shader
     glUseProgram(programID);
 
-    /*if (glfwGetKey(window, GLFW_KEY_W)) curr_y += 0.11;
-    else if (glfwGetKey(window, GLFW_KEY_S)) curr_y -= 0.11;
-    else if (glfwGetKey(window, GLFW_KEY_A)) curr_x -= 0.11;
-    else if (glfwGetKey(window, GLFW_KEY_D)) curr_x += 0.11;
-    else */if (glfwGetKey(window, GLFW_KEY_R)) curr_angle += 0.01;
+    if (glfwGetKey(window, GLFW_KEY_W)) curr_angle_x += 0.01;
+    else if (glfwGetKey(window, GLFW_KEY_S)) curr_angle_x -= 0.01;
+    else if (glfwGetKey(window, GLFW_KEY_A)) curr_angle_y += 0.01;
+    else if (glfwGetKey(window, GLFW_KEY_D)) curr_angle_y -= 0.01;
     initializeMVPTransformation();
 
     // Send our transformation to the currently bound shader, 
@@ -159,7 +158,7 @@ bool initializeWindow()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Open a window and create its OpenGL context
-    window = glfwCreateWindow(1024, 768, "Demo: Cube", NULL, NULL);
+    window = glfwCreateWindow(1024, 768, "Test: Guns", NULL, NULL);
     if (window == NULL) {
         fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
         getchar();
@@ -209,7 +208,8 @@ bool initializeMVPTransformation()
     float fix_angle = -1.5708;
     Model = glm::rotate(Model, fix_angle , glm::vec3(1.0f, 0.0f, 0.0f));
 
-    Model = glm::rotate(Model, curr_angle, glm::vec3(0.0f, 0.0f, 1.0f));
+    Model = glm::rotate(Model, curr_angle_y, glm::vec3(0.0f, 0.0f, 1.0f));
+    Model = glm::rotate(Model, curr_angle_x, glm::vec3(1.0f, 0.0f, 0.0f));
     glm::mat4 transformation;//additional transformation for the model
 	
     transformation[0][0] = 1.0; transformation[1][0] = 0.0; transformation[2][0] = 0.0; transformation[3][0] = curr_x;
@@ -234,7 +234,7 @@ bool initializeVertexbuffer()
     //create vertex and normal data
     std::vector< glm::vec3 > vertices = std::vector< glm::vec3 >();
     std::vector< glm::vec3 > normals = std::vector< glm::vec3 >();
-    parseStl(vertices, normals, "../res/127mm.stl");
+    parseStl(vertices, normals, "../res/KGVsecbatGuns.stl");
     vertexbuffer_size = vertices.size() * sizeof(glm::vec3);
 
     // print normals to console

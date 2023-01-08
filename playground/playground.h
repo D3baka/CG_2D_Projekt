@@ -26,7 +26,8 @@ glm::mat4 M;
 
 float curr_x;
 float curr_y;
-float curr_angle;
+float curr_angle_y;
+float curr_angle_x;
 
 
 int main(void); //<<< main function, called at startup
