@@ -46,7 +46,7 @@ public:
 		std::cout << "creating GO with name: " << name << std::endl;
         filename = name;
         std::cout << "initializing Vertexbuffer " << name << std::endl;
-        //initializeVertexbuffer();
+        initializeVertexbuffer();
     }
 
     void update() {
@@ -101,8 +101,9 @@ public:
     {
         std::cout << "test " << filename << std::endl;
         glGenVertexArrays(1, &VertexArrayID);
-        glBindVertexArray(VertexArrayID);
         std::cout << "test2 " << filename << std::endl;
+        glBindVertexArray(VertexArrayID);
+        std::cout << "test3 " << filename << std::endl;
         //create vertex and normal data 
         std::vector< glm::vec3 > vertices = std::vector< glm::vec3 >();
         std::vector< glm::vec3 > normals = std::vector< glm::vec3 >();
@@ -157,12 +158,16 @@ int main(void)
 {
 	std::cout << "Hello World" << std::endl;
 
+    std::cout << "initializing Window" << std::endl;
+    //Initialize window
+    bool windowInitialized = initializeWindow();
+    if (!windowInitialized) return -1;
+	
     std::cout << "Create Gameobjects" << std::endl;
     //create Gameojects
 	GameObject turret = GameObject("KGVsecbatTurret");
 	GameObject barrels = GameObject("KGVsecbatGuns");
     std::cout << "Pushing Gameobjects" << std::endl;
-	turret.initializeVertexbuffer();
 	
     gameObjects.push_back(&turret);
 	gameObjects.push_back(&barrels);
@@ -170,10 +175,7 @@ int main(void)
 
 
 
-    std::cout << "initializing Window" << std::endl;
-    //Initialize window
-    bool windowInitialized = initializeWindow();
-    if (!windowInitialized) return -1;
+    
 
     /*//Initialize vertex buffer
     bool vertexbufferInitialized = initializeVertexbuffer();
@@ -202,7 +204,11 @@ int main(void)
     
 
     //Cleanup and close window
-    cleanupVertexbuffer();
+    for (int i = 0; i < gameObjects.size(); i++) {
+        gameObjects.at(i)->cleanupVertexbuffer();
+        gameObjects.at(i)->cleanupColorbuffer();
+    }
+	
     glDeleteProgram(programID);
     closeWindow();
 
@@ -381,19 +387,9 @@ bool initializeMVPTransformation()
 
 
 
-bool cleanupVertexbuffer()
-{
-    // Cleanup VBO
-    glDeleteVertexArrays(1, &VertexArrayID);
-    return true;
-}
 
-bool cleanupColorbuffer()
-{
-    // Cleanup VBO
-    glDeleteBuffers(1, &colorbuffer);
-    return true;
-}
+
+
 
 bool closeWindow()
 {

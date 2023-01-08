@@ -12,8 +12,8 @@
 //some global variables for handling the vertex buffer
 
 GLuint colorbuffer;
-GLuint VertexArrayID;
-GLuint vertexbuffer_size;
+//GLuint VertexArrayID;
+//GLuint vertexbuffer_size;
 
 //program ID of the shaders, required for handling the shaders with OpenGL
 GLuint programID;
