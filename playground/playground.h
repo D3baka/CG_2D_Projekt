@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 
 //some global variables for handling the vertex buffer
-GLuint vertexbuffer[2];
+
 GLuint colorbuffer;
 GLuint VertexArrayID;
 GLuint vertexbuffer_size;

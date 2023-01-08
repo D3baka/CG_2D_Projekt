@@ -14,32 +14,184 @@ GLFWwindow* window;
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
 
+//Include additional libraries
+#include <vector>
+#include <chrono>
+#include <cmath>
+#include <string>
+using namespace std;
+
 #include <common/shader.hpp>
 #include "parse_stl.h"
+
+//classes
+
+class GameObject {
+public:
+    
+
+    //modified
+    GLuint vertexbuffer[2];
+
+    string filename;
+
+    GLuint VertexArrayID;
+    GLuint vertexbuffer_size;
+    glm::mat4 translation;
+    float speed;
+    float radius;
+    bool isActive;
+
+    GameObject(string name) {
+		std::cout << "creating GO with name: " << name << std::endl;
+        filename = name;
+        std::cout << "initializing Vertexbuffer " << name << std::endl;
+        //initializeVertexbuffer();
+    }
+
+    void update() {
+        initializeMVPTransformation();
+        draw();
+    }
+    void draw() {
+
+        // Use our shader
+        glUseProgram(programID);
+		
+        // Send our transformation to the currently bound shader, 
+           // in the "MVP" uniform
+        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(MatrixIDM, 1, GL_FALSE, &M[0][0]);
+
+        // 1rst attribute buffer : vertices
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
+        glVertexAttribPointer(
+            0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+        );
+
+        // 3rd attribute buffer : normals
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);
+        glVertexAttribPointer(
+            1,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+        );
+
+
+
+
+
+        // Draw the triangle !
+        glDrawArrays(GL_TRIANGLES, 0, vertexbuffer_size * 3); // 3 indices starting at 0 -> 1 triangle
+
+    }
+   
+
+    bool initializeVertexbuffer()
+    {
+        std::cout << "test " << filename << std::endl;
+        glGenVertexArrays(1, &VertexArrayID);
+        glBindVertexArray(VertexArrayID);
+        std::cout << "test2 " << filename << std::endl;
+        //create vertex and normal data 
+        std::vector< glm::vec3 > vertices = std::vector< glm::vec3 >();
+        std::vector< glm::vec3 > normals = std::vector< glm::vec3 >();
+        std::cout << "parsing stl " << filename << std::endl;
+		parseStl(vertices, normals, "../res/" + filename + ".stl");
+        vertexbuffer_size = vertices.size() * sizeof(glm::vec3);
+
+        // print normals to console
+
+        glGenBuffers(2, vertexbuffer); //generate two buffers, one for the vertices, one for the normals
+
+        //fill first buffer (vertices)
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+        //fill second buffer (normals)
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);
+        glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+        return true;
+
+        
+    }
+
+    bool cleanupVertexbuffer()
+    {
+        // Cleanup VBO
+        glDeleteVertexArrays(1, &VertexArrayID);
+        return true;
+    }
+
+    bool cleanupColorbuffer() {
+        // Cleanup VBO
+        glDeleteBuffers(1, &colorbuffer);
+        return true;
+    }
+};
+
+
+//Global variables
+std::vector<GameObject*> gameObjects;
+
+
+
 
 
 int main(void)
 {
+	std::cout << "Hello World" << std::endl;
+
+    std::cout << "Create Gameobjects" << std::endl;
+    //create Gameojects
+	GameObject turret = GameObject("KGVsecbatTurret");
+	GameObject barrels = GameObject("KGVsecbatGuns");
+    std::cout << "Pushing Gameobjects" << std::endl;
+	turret.initializeVertexbuffer();
+	
+    gameObjects.push_back(&turret);
+	gameObjects.push_back(&barrels);
+
+
+
+
+    std::cout << "initializing Window" << std::endl;
     //Initialize window
     bool windowInitialized = initializeWindow();
     if (!windowInitialized) return -1;
 
-    //Initialize vertex buffer
+    /*//Initialize vertex buffer
     bool vertexbufferInitialized = initializeVertexbuffer();
     if (!vertexbufferInitialized) return -1;
-
+    */
 
     glEnable(GL_DEPTH_TEST);
 
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader");
 
-    initializeMVPTransformation();
+    //initializeMVPTransformation();
 
     curr_x = 0.0f;
     curr_y = 0.0f;
 
     //start animation loop until escape key is pressed
+	std::cout << "Starting animation loop" << std::endl;
     do {
 
         updateAnimationLoop();
@@ -47,7 +199,7 @@ int main(void)
     } // Check if the ESC key was pressed or the window was closed
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
         glfwWindowShouldClose(window) == 0);
-
+    
 
     //Cleanup and close window
     cleanupVertexbuffer();
@@ -88,50 +240,19 @@ void updateAnimationLoop()
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Use our shader
-    glUseProgram(programID);
 
     if (glfwGetKey(window, GLFW_KEY_W)) curr_angle_x += 0.01;
     else if (glfwGetKey(window, GLFW_KEY_S)) curr_angle_x -= 0.01;
     else if (glfwGetKey(window, GLFW_KEY_A)) curr_angle_y += 0.01;
     else if (glfwGetKey(window, GLFW_KEY_D)) curr_angle_y -= 0.01;
-    initializeMVPTransformation();
 
-    // Send our transformation to the currently bound shader, 
-    // in the "MVP" uniform
-    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    glUniformMatrix4fv(MatrixIDM, 1, GL_FALSE, &M[0][0]);
-
-    // 1rst attribute buffer : vertices
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
-    glVertexAttribPointer(
-        0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-        3,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void*)0            // array buffer offset
-    );
-
-    // 3rd attribute buffer : normals
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);
-    glVertexAttribPointer(
-        1,                  // attribute 1. No particular reason for 1, but must match the layout in the shader.
-        3,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void*)0            // array buffer offset
-    );
-
-
-
-
-
-    // Draw the triangle !
-    glDrawArrays(GL_TRIANGLES, 0, vertexbuffer_size * 3); // 3 indices starting at 0 -> 1 triangle
+	//needs loop where each gameobject is updated, according to the rotation information
+	//call update for every gameobject in gameObjects
+	for (int i = 0; i < gameObjects.size(); i++) {
+		gameObjects.at(i)->update();
+	}
+	
+   
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
@@ -226,7 +347,7 @@ bool initializeMVPTransformation()
 
 }
 
-bool initializeVertexbuffer()
+/*bool initializeVertexbuffer()
 {
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
@@ -255,7 +376,7 @@ bool initializeVertexbuffer()
 
     return true;
 
-}
+}*/
 
 
 
