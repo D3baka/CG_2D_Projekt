@@ -280,7 +280,7 @@ void updateAnimationLoop()
 
     
     if (glfwGetKey(window, GLFW_KEY_W) && curr_angle_y > 0) curr_angle_y -= 0.01;
-    if (glfwGetKey(window, GLFW_KEY_S)  && (curr_angle_y < 1.4835299)) curr_angle_y += 0.01;
+    if (glfwGetKey(window, GLFW_KEY_S)  && (curr_angle_y < 1.0471976)) curr_angle_y += 0.01;
     if (glfwGetKey(window, GLFW_KEY_A)) curr_angle_x += 0.01;
     if (glfwGetKey(window, GLFW_KEY_D)) curr_angle_x -= 0.01;
 
@@ -357,7 +357,7 @@ bool initializeMVPTransformation(float angle_x, float angle_y, glm::mat4 offset)
     //glm::mat4 Projection = glm::frustum(-2.0f, 2.0f, -2.0f, 2.0f, -2.0f, 2.0f);
     // Camera matrix
     glm::mat4 View = glm::lookAt(
-        glm::vec3(3, 0, 0), // Camera is at (4,3,-3), in World Space
+        glm::vec3(2, 1, 0), // Camera is at (4,3,-3), in World Space
         glm::vec3(0, 0, 0), // and looks at the origin
         glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
