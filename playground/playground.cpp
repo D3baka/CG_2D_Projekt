@@ -43,11 +43,8 @@ public:
     bool isActive;
 
    
-
-    virtual void update() {
-        initializeMVPTransformation(curr_angle_x, curr_angle_y);
-        draw();
-    }
+    
+	virtual void update() = 0;
     void draw() {
 
         // Use our shader
@@ -150,8 +147,13 @@ public:
         initializeVertexbuffer();
     }
     
-    void update() {
-        initializeMVPTransformation(0.0, curr_angle_y);
+    void update() override{
+        glm::mat4 transformation = glm::mat4(1.0f);
+        transformation[0][0] = 1.0; transformation[1][0] = 0.0; transformation[2][0] = 0.0; transformation[3][0] = 0.0;
+        transformation[0][1] = 0.0; transformation[1][1] = 1.0; transformation[2][1] = 0.0; transformation[3][1] = 0.0;
+        transformation[0][2] = 0.0; transformation[1][2] = 0.0; transformation[2][2] = 1.0; transformation[3][2] = 0.0;
+        transformation[0][3] = 0.0; transformation[1][3] = 0.0; transformation[2][3] = 0.0; transformation[3][3] = 1.0;
+        initializeMVPTransformation(0.0, curr_angle_x, transformation);
         draw();
     }
    
@@ -165,8 +167,15 @@ public:
         std::cout << "initializing Vertexbuffer " << name << std::endl;
         initializeVertexbuffer();
     }
-    void update() {
-		initializeMVPTransformation(curr_angle_x, curr_angle_y);
+    void update() override{
+        glm::mat4 transformation = glm::mat4(1.0f);
+        transformation[0][0] = 1.0; transformation[1][0] = 0.0; transformation[2][0] = 0.0; transformation[3][0] = 0.0;
+        transformation[0][1] = 0.0; transformation[1][1] = 1.0; transformation[2][1] = 0.0; transformation[3][1] = 0.415;
+        transformation[0][2] = 0.0; transformation[1][2] = 0.0; transformation[2][2] = 1.0; transformation[3][2] = 0.0;
+        transformation[0][3] = 0.0; transformation[1][3] = 0.0; transformation[2][3] = 0.0; transformation[3][3] = 1.0;
+
+        //std::cout << "offset local: " << transformation[3][0] << " " << transformation[3][1] << " " << std::endl;
+		initializeMVPTransformation(curr_angle_y, curr_angle_x, transformation);
         draw();
     }
 
@@ -191,8 +200,8 @@ int main(void)
 	
     std::cout << "Create Gameobjects" << std::endl;
     //create Gameojects
-	Turret turret = Turret("KGVsecbatTurret");
-	GameObject barrels = Barrels("KGVsecbatGuns");
+	Turret turret = Turret("KGVturret");
+	Barrels barrels = Barrels("KGVsecbatGuns");
     std::cout << "Pushing Gameobjects" << std::endl;
 	
     gameObjects.push_back(&turret);
@@ -213,10 +222,7 @@ int main(void)
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader");
 
-    //initializeMVPTransformation();
-
-    curr_x = 0.0f;
-    curr_y = 0.0f;
+    
 
     //start animation loop until escape key is pressed
 	std::cout << "Starting animation loop" << std::endl;
@@ -272,11 +278,11 @@ void updateAnimationLoop()
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-    if (glfwGetKey(window, GLFW_KEY_W)) curr_angle_x += 0.01;
-    if (glfwGetKey(window, GLFW_KEY_S)) curr_angle_x -= 0.01;
-    if (glfwGetKey(window, GLFW_KEY_A)) curr_angle_y += 0.01;
-    if (glfwGetKey(window, GLFW_KEY_D)) curr_angle_y -= 0.01;
+    
+    if (glfwGetKey(window, GLFW_KEY_W) && curr_angle_y > 0) curr_angle_y -= 0.01;
+    if (glfwGetKey(window, GLFW_KEY_S)  && (curr_angle_y < 1.4835299)) curr_angle_y += 0.01;
+    if (glfwGetKey(window, GLFW_KEY_A)) curr_angle_x += 0.01;
+    if (glfwGetKey(window, GLFW_KEY_D)) curr_angle_x -= 0.01;
 
 	//needs loop where each gameobject is updated, according to the rotation information
 	//call update for every gameobject in gameObjects
@@ -337,7 +343,7 @@ bool initializeWindow()
     return true;
 }
 
-bool initializeMVPTransformation(float angle_x, float angle_y)
+bool initializeMVPTransformation(float angle_x, float angle_y, glm::mat4 offset)
 {
     // Get a handle for our "MVP" uniform
     GLuint MatrixIDnew = glGetUniformLocation(programID, "MVP");
@@ -351,7 +357,7 @@ bool initializeMVPTransformation(float angle_x, float angle_y)
     //glm::mat4 Projection = glm::frustum(-2.0f, 2.0f, -2.0f, 2.0f, -2.0f, 2.0f);
     // Camera matrix
     glm::mat4 View = glm::lookAt(
-        glm::vec3(5, 0, 0), // Camera is at (4,3,-3), in World Space
+        glm::vec3(3, 0, 0), // Camera is at (4,3,-3), in World Space
         glm::vec3(0, 0, 0), // and looks at the origin
         glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
@@ -363,12 +369,15 @@ bool initializeMVPTransformation(float angle_x, float angle_y)
 
     Model = glm::rotate(Model, angle_y, glm::vec3(0.0f, 0.0f, 1.0f));
     Model = glm::rotate(Model, angle_x, glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::mat4 transformation;//additional transformation for the model
+
+    
+    glm::mat4 transformation = offset;
 	
-    transformation[0][0] = 1.0; transformation[1][0] = 0.0; transformation[2][0] = 0.0; transformation[3][0] = curr_x;
-    transformation[0][1] = 0.0; transformation[1][1] = 1.0; transformation[2][1] = 0.0; transformation[3][1] = curr_y;
-    transformation[0][2] = 0.0; transformation[1][2] = 0.0; transformation[2][2] = 1.0; transformation[3][2] = 0.0;
-    transformation[0][3] = 0.0; transformation[1][3] = 0.0; transformation[2][3] = 0.0; transformation[3][3] = 1.0;
+	//std::cout << "offset: " << transformation[3][0] << " " << transformation[3][1] << " "<< std::endl;
+    
+    
+
+    
 
     // Our ModelViewProjection : multiplication of our 3 matrices
 	
@@ -378,44 +387,6 @@ bool initializeMVPTransformation(float angle_x, float angle_y)
     return true;
 
 }
-
-/*bool initializeVertexbuffer()
-{
-    glGenVertexArrays(1, &VertexArrayID);
-    glBindVertexArray(VertexArrayID);
-
-    //create vertex and normal data
-    std::vector< glm::vec3 > vertices = std::vector< glm::vec3 >();
-    std::vector< glm::vec3 > normals = std::vector< glm::vec3 >();
-    parseStl(vertices, normals, "../res/KGVsecbatGuns.stl");
-    vertexbuffer_size = vertices.size() * sizeof(glm::vec3);
-
-    // print normals to console
-
-    glGenBuffers(2, vertexbuffer); //generate two buffers, one for the vertices, one for the normals
-
-    //fill first buffer (vertices)
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    //fill second buffer (normals)
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);
-    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    return true;
-
-}*/
-
-
-
-
-
-
-
 
 bool closeWindow()
 {
