@@ -42,15 +42,10 @@ public:
     float radius;
     bool isActive;
 
-    GameObject(string name) {
-		std::cout << "creating GO with name: " << name << std::endl;
-        filename = name;
-        std::cout << "initializing Vertexbuffer " << name << std::endl;
-        initializeVertexbuffer();
-    }
+   
 
-    void update() {
-        initializeMVPTransformation();
+    virtual void update() {
+        initializeMVPTransformation(curr_angle_x, curr_angle_y);
         draw();
     }
     void draw() {
@@ -146,6 +141,37 @@ public:
     }
 };
 
+class Turret : public GameObject {
+public:
+    Turret(string name){
+        std::cout << "creating turret with name: " << name << std::endl;
+        filename = name;
+        std::cout << "initializing Vertexbuffer " << name << std::endl;
+        initializeVertexbuffer();
+    }
+    
+    void update() {
+        initializeMVPTransformation(0.0, curr_angle_y);
+        draw();
+    }
+   
+};
+
+class Barrels : public GameObject {
+public:
+    Barrels(string name) {
+        std::cout << "creating barrels with name: " << name << std::endl;
+        filename = name;
+        std::cout << "initializing Vertexbuffer " << name << std::endl;
+        initializeVertexbuffer();
+    }
+    void update() {
+		initializeMVPTransformation(curr_angle_x, curr_angle_y);
+        draw();
+    }
+
+};
+
 
 //Global variables
 std::vector<GameObject*> gameObjects;
@@ -165,8 +191,8 @@ int main(void)
 	
     std::cout << "Create Gameobjects" << std::endl;
     //create Gameojects
-	GameObject turret = GameObject("KGVsecbatTurret");
-	GameObject barrels = GameObject("KGVsecbatGuns");
+	Turret turret = Turret("KGVsecbatTurret");
+	GameObject barrels = Barrels("KGVsecbatGuns");
     std::cout << "Pushing Gameobjects" << std::endl;
 	
     gameObjects.push_back(&turret);
@@ -248,9 +274,9 @@ void updateAnimationLoop()
 
 
     if (glfwGetKey(window, GLFW_KEY_W)) curr_angle_x += 0.01;
-    else if (glfwGetKey(window, GLFW_KEY_S)) curr_angle_x -= 0.01;
-    else if (glfwGetKey(window, GLFW_KEY_A)) curr_angle_y += 0.01;
-    else if (glfwGetKey(window, GLFW_KEY_D)) curr_angle_y -= 0.01;
+    if (glfwGetKey(window, GLFW_KEY_S)) curr_angle_x -= 0.01;
+    if (glfwGetKey(window, GLFW_KEY_A)) curr_angle_y += 0.01;
+    if (glfwGetKey(window, GLFW_KEY_D)) curr_angle_y -= 0.01;
 
 	//needs loop where each gameobject is updated, according to the rotation information
 	//call update for every gameobject in gameObjects
@@ -311,7 +337,7 @@ bool initializeWindow()
     return true;
 }
 
-bool initializeMVPTransformation()
+bool initializeMVPTransformation(float angle_x, float angle_y)
 {
     // Get a handle for our "MVP" uniform
     GLuint MatrixIDnew = glGetUniformLocation(programID, "MVP");
@@ -335,8 +361,8 @@ bool initializeMVPTransformation()
     float fix_angle = -1.5708;
     Model = glm::rotate(Model, fix_angle , glm::vec3(1.0f, 0.0f, 0.0f));
 
-    Model = glm::rotate(Model, curr_angle_y, glm::vec3(0.0f, 0.0f, 1.0f));
-    Model = glm::rotate(Model, curr_angle_x, glm::vec3(1.0f, 0.0f, 0.0f));
+    Model = glm::rotate(Model, angle_y, glm::vec3(0.0f, 0.0f, 1.0f));
+    Model = glm::rotate(Model, angle_x, glm::vec3(1.0f, 0.0f, 0.0f));
     glm::mat4 transformation;//additional transformation for the model
 	
     transformation[0][0] = 1.0; transformation[1][0] = 0.0; transformation[2][0] = 0.0; transformation[3][0] = curr_x;

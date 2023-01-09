@@ -34,7 +34,7 @@ int main(void); //<<< main function, called at startup
 void updateAnimationLoop(); //<<< updates the animation loop
 void parseStl(std::vector< glm::vec3 >& vertices, std::vector< glm::vec3 >& normals, std::string stl_file_name);
 bool initializeWindow(); //<<< initializes the window using GLFW and GLEW
-bool initializeMVPTransformation();
+bool initializeMVPTransformation(float angle_x, float angle_y);
 bool initializeVertexbuffer(); //<<< initializes the vertex buffer array and binds it OpenGL
 bool initializeColorbuffer(); //<<< initializes the vertex buffer array and binds it OpenGL
 
