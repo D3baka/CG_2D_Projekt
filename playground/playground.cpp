@@ -170,12 +170,42 @@ public:
     void update() override{
         glm::mat4 transformation = glm::mat4(1.0f);
         transformation[0][0] = 1.0; transformation[1][0] = 0.0; transformation[2][0] = 0.0; transformation[3][0] = 0.0;
-        transformation[0][1] = 0.0; transformation[1][1] = 1.0; transformation[2][1] = 0.0; transformation[3][1] = 0.415;
-        transformation[0][2] = 0.0; transformation[1][2] = 0.0; transformation[2][2] = 1.0; transformation[3][2] = 0.0;
+        transformation[0][1] = 0.0; transformation[1][1] = 1.0; transformation[2][1] = 0.0; transformation[3][1] = 0.08;
+        transformation[0][2] = 0.0; transformation[1][2] = 0.0; transformation[2][2] = 1.0; transformation[3][2] = 0.40;
         transformation[0][3] = 0.0; transformation[1][3] = 0.0; transformation[2][3] = 0.0; transformation[3][3] = 1.0;
 
         //std::cout << "offset local: " << transformation[3][0] << " " << transformation[3][1] << " " << std::endl;
 		initializeMVPTransformation(curr_angle_y, curr_angle_x, transformation);
+        draw();
+    }
+
+};
+
+class KGVShell : public GameObject {
+public:
+    float speed = 0.1;
+    glm::mat4 location;
+    glm::vec2 dir;
+    KGVShell(string name, glm::vec2 direction, glm::mat4 startloc ) {
+        std::cout << "creating shell with name: " << name << " and direction: " << direction.x << direction.y  << std::endl;
+        filename = name;
+        std::cout << "initializing Vertexbuffer " << name << std::endl;
+        initializeVertexbuffer();
+        location = startloc;
+        dir = direction;
+    }
+    void update() override {
+        //Todo: lots of math to move the shell in its direction
+
+
+        glm::mat4 transformation = location;
+        transformation[0][0] = 1.0; transformation[1][0] = 0.0; transformation[2][0] = 0.0; transformation[3][0] = 0.0;
+        transformation[0][1] = 0.0; transformation[1][1] = 1.0; transformation[2][1] = 0.0; transformation[3][1] = 0.0;
+        transformation[0][2] = 0.0; transformation[1][2] = 0.0; transformation[2][2] = 1.0; transformation[3][2] = 0.0;
+        transformation[0][3] = 0.0; transformation[1][3] = 0.0; transformation[2][3] = 0.0; transformation[3][3] = 1.0;
+
+        //std::cout << "offset local: " << transformation[3][0] << " " << transformation[3][1] << " " << std::endl;
+        initializeMVPTransformation(dir[0], dir[1], transformation);
         draw();
     }
 
@@ -202,10 +232,21 @@ int main(void)
     //create Gameojects
 	Turret turret = Turret("KGVturret");
 	Barrels barrels = Barrels("KGVsecbatGuns");
+
+    glm::vec2 dir = glm::vec2(0,0);
+    glm::mat4 location = glm::mat4(1.0f);
+    location[0][0] = 1.0; location[1][0] = 0.0; location[2][0] = 0.0; location[3][0] = 1.0;
+    location[0][1] = 0.0; location[1][1] = 1.0; location[2][1] = 0.0; location[3][1] = 1.0;
+    location[0][2] = 0.0; location[1][2] = 0.0; location[2][2] = 1.0; location[3][2] = 1.0;
+    location[0][3] = 0.0; location[1][3] = 0.0; location[2][3] = 0.0; location[3][3] = 1.0;
+    KGVShell shell = KGVShell("KGVshell", dir, location);
     std::cout << "Pushing Gameobjects" << std::endl;
+
+
 	
     gameObjects.push_back(&turret);
 	gameObjects.push_back(&barrels);
+    gameObjects.push_back(&shell);
 
 
 
@@ -280,7 +321,7 @@ void updateAnimationLoop()
 
     
     if (glfwGetKey(window, GLFW_KEY_W) && curr_angle_y > 0) curr_angle_y -= 0.01;
-    if (glfwGetKey(window, GLFW_KEY_S)  && (curr_angle_y < 1.0471976)) curr_angle_y += 0.01;
+    if (glfwGetKey(window, GLFW_KEY_S)  && (curr_angle_y < 1.3962634)) curr_angle_y += 0.01;
     if (glfwGetKey(window, GLFW_KEY_A)) curr_angle_x += 0.01;
     if (glfwGetKey(window, GLFW_KEY_D)) curr_angle_x -= 0.01;
 
@@ -358,7 +399,7 @@ bool initializeMVPTransformation(float angle_x, float angle_y, glm::mat4 offset)
     // Camera matrix
     glm::mat4 View = glm::lookAt(
         glm::vec3(2, 1, 0), // Camera is at (4,3,-3), in World Space
-        glm::vec3(0, 0, 0), // and looks at the origin
+        glm::vec3(-10, 0, 0), // and looks at the origin
         glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
 	
@@ -368,7 +409,10 @@ bool initializeMVPTransformation(float angle_x, float angle_y, glm::mat4 offset)
     Model = glm::rotate(Model, fix_angle , glm::vec3(1.0f, 0.0f, 0.0f));
 
     Model = glm::rotate(Model, angle_y, glm::vec3(0.0f, 0.0f, 1.0f));
-    Model = glm::rotate(Model, angle_x, glm::vec3(1.0f, 0.0f, 0.0f));
+    
+   
+    glm::mat4 Model2 = glm::mat4(1.0f);
+    Model2 = glm::rotate(Model2, angle_x, glm::vec3(1.0f, 0.0f, 0.0f));
 
     
     glm::mat4 transformation = offset;
@@ -381,7 +425,7 @@ bool initializeMVPTransformation(float angle_x, float angle_y, glm::mat4 offset)
 
     // Our ModelViewProjection : multiplication of our 3 matrices
 	
-    MVP = Projection * View * transformation * Model ; // Remember, matrix multiplication is the other way around
+    MVP = Projection * View  * Model * transformation * Model2; // Remember, matrix multiplication is the other way around
     M = Model * transformation;
 
     return true;
