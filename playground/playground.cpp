@@ -145,6 +145,7 @@ public:
         filename = name;
         std::cout << "initializing Vertexbuffer " << name << std::endl;
         initializeVertexbuffer();
+        isActive = true;
     }
     
     void update() override{
@@ -166,6 +167,7 @@ public:
         filename = name;
         std::cout << "initializing Vertexbuffer " << name << std::endl;
         initializeVertexbuffer();
+        isActive = true;
     }
     void update() override{
         glm::mat4 transformation = glm::mat4(1.0f);
@@ -183,7 +185,7 @@ public:
 
 class KGVShell : public GameObject {
 public:
-    float speed = 0.01;
+    float speed = 0.1;
     glm::mat4 location;
     float distTravelled;
     float my_angle_x;
@@ -196,26 +198,27 @@ public:
 		my_angle_x = curr_angle_x;
 		my_angle_y = curr_angle_y;
         distTravelled = 0;
+		isActive = true;
         
         
         
     }
     void update() override {
-        //Todo: lots of math to move the shell in its direction
-		//calculate a new location for the shell using the speed and the direction
-		
-        
-		
-
-        
-		
         
         distTravelled += speed;
         
         //std::cout << "offset local: " << transformation[3][0] << " " << transformation[3][1] << " " << std::endl;
         initializeMVPTransformationBullet(my_angle_x, my_angle_y, distTravelled);
-        draw();
+        draw();	
+        if (distTravelled > 50.0f) {
+            deactivate();
+        }
+        //std::cout << distTravelled << std::endl;
 		
+    }
+    void deactivate() {
+        std::cout << "Deactivating shell" << std::endl;
+        isActive = false;
     }
 
 };
@@ -223,9 +226,10 @@ public:
 
 //Global variables
 std::vector<std::shared_ptr<GameObject>> gameObjects;
+std::chrono::steady_clock::time_point lastFired;
+std::chrono::steady_clock::time_point lastUpdate;
 
-
-
+float fireCooldown = 3000.0f;
 
 
 int main(void)
@@ -234,67 +238,68 @@ int main(void)
 
     std::cout << "initializing Window" << std::endl;
     //Initialize window
-    bool windowInitialized = initializeWindow();
-    if (!windowInitialized) return -1;
+bool windowInitialized = initializeWindow();
+if (!windowInitialized) return -1;
+
+std::cout << "Create Gameobjects" << std::endl;
+//create Gameojects
+lastUpdate = std::chrono::steady_clock::now();
+lastFired = std::chrono::steady_clock::now();
+
+glm::mat4 location = glm::mat4(1.0f);
+location[0][0] = 1.0; location[1][0] = 0.0; location[2][0] = 0.0; location[3][0] = 0.0;
+location[0][1] = 0.0; location[1][1] = 1.0; location[2][1] = 0.0; location[3][1] = 0.0;
+location[0][2] = 0.0; location[1][2] = 0.0; location[2][2] = 1.0; location[3][2] = 0.0;
+location[0][3] = 0.0; location[1][3] = 0.0; location[2][3] = 0.0; location[3][3] = 1.0;
+
+std::cout << "Pushing Gameobjects" << std::endl;
+
+
+
+std::shared_ptr<GameObject> turret = std::make_shared<Turret>("KGVturret");
+std::shared_ptr<GameObject> barrels = std::make_shared<Barrels>("KGVsecbatGuns");
+gameObjects.push_back(turret);
+gameObjects.push_back(barrels);
+
+
+
+
+
+
+/*//Initialize vertex buffer
+bool vertexbufferInitialized = initializeVertexbuffer();
+if (!vertexbufferInitialized) return -1;
+*/
+
+glEnable(GL_DEPTH_TEST);
+
+// Create and compile our GLSL program from the shaders
+programID = LoadShaders("SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader");
+
+
+
+//start animation loop until escape key is pressed
+std::cout << "Starting animation loop" << std::endl;
+do {
+    lastUpdate = std::chrono::steady_clock::now();
+    updateAnimationLoop();
 	
-    std::cout << "Create Gameobjects" << std::endl;
-    //create Gameojects
-	
 
-    
-    glm::mat4 location = glm::mat4(1.0f);
-    location[0][0] = 1.0; location[1][0] = 0.0; location[2][0] = 0.0; location[3][0] = 0.0;
-    location[0][1] = 0.0; location[1][1] = 1.0; location[2][1] = 0.0; location[3][1] = 0.0;
-    location[0][2] = 0.0; location[1][2] = 0.0; location[2][2] = 1.0; location[3][2] = 0.0;
-    location[0][3] = 0.0; location[1][3] = 0.0; location[2][3] = 0.0; location[3][3] = 1.0;
-    
-    std::cout << "Pushing Gameobjects" << std::endl;
+} // Check if the ESC key was pressed or the window was closed
+while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+    glfwWindowShouldClose(window) == 0);
 
 
-   
-	std::shared_ptr<GameObject> turret = std::make_shared<Turret>("KGVturret");
-    std::shared_ptr<GameObject> barrels = std::make_shared<Barrels>("KGVsecbatGuns");
-	gameObjects.push_back(turret);
-	gameObjects.push_back(barrels);
+//Cleanup and close window
+for (int i = 0; i < gameObjects.size(); i++) {
+    gameObjects.at(i)->cleanupVertexbuffer();
+    gameObjects.at(i)->cleanupColorbuffer();
+}
 
+glDeleteProgram(programID);
+closeWindow();
 
-
-
-    
-
-    /*//Initialize vertex buffer
-    bool vertexbufferInitialized = initializeVertexbuffer();
-    if (!vertexbufferInitialized) return -1;
-    */
-
-    glEnable(GL_DEPTH_TEST);
-
-    // Create and compile our GLSL program from the shaders
-    programID = LoadShaders("SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader");
-
-    
-
-    //start animation loop until escape key is pressed
-	std::cout << "Starting animation loop" << std::endl;
-    do {
-
-        updateAnimationLoop();
-
-    } // Check if the ESC key was pressed or the window was closed
-    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-        glfwWindowShouldClose(window) == 0);
-    
-
-    //Cleanup and close window
-    for (int i = 0; i < gameObjects.size(); i++) {
-        gameObjects.at(i)->cleanupVertexbuffer();
-        gameObjects.at(i)->cleanupColorbuffer();
-    }
-	
-    glDeleteProgram(programID);
-    closeWindow();
-
-    return 0;
+return 0;
 }
 
 void parseStl(std::vector< glm::vec3 >& vertices,
@@ -328,22 +333,38 @@ void updateAnimationLoop()
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    
+
     if (glfwGetKey(window, GLFW_KEY_W) && curr_angle_y > 0) curr_angle_y -= 0.01;
-    if (glfwGetKey(window, GLFW_KEY_S)  && (curr_angle_y < 1.3962634)) curr_angle_y += 0.01;
+    if (glfwGetKey(window, GLFW_KEY_S) && (curr_angle_y < 1.3962634)) curr_angle_y += 0.01;
     if (glfwGetKey(window, GLFW_KEY_A)) curr_angle_x += 0.01;
     if (glfwGetKey(window, GLFW_KEY_D)) curr_angle_x -= 0.01;
     if (glfwGetKey(window, GLFW_KEY_SPACE)) {
-        std::shared_ptr<GameObject> projectile = std::make_shared<KGVShell>("KGVshell");
-		gameObjects.push_back(projectile);
+        //std::cout << "CHECKING FIRE COOLDOWN" << std::endl;
+        if ((std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastFired).count()) > fireCooldown){
+            std::shared_ptr<GameObject> projectile = std::make_shared<KGVShell>("KGVshell");
+            gameObjects.push_back(projectile);
+            lastFired = std::chrono::steady_clock::now();
+        }
+        
     }
-
-
     
-	//needs loop where each gameobject is updated, according to the rotation information
+	//delete inactive objects
+    std::vector<std::shared_ptr<GameObject>> activeObjects;
+    for (int i = 0; i < gameObjects.size(); i++) {
+        if (gameObjects.at(i).get()->isActive) {
+            activeObjects.push_back(gameObjects.at(i));
+        } 
+    }
+	int removedObjectsCount = gameObjects.size() - activeObjects.size();
+	if (removedObjectsCount > 0) std::cout << "Removed " << removedObjectsCount << " objects" << std::endl;
+	
+    gameObjects.clear();
+    gameObjects = activeObjects;
+	
 	//call update for every gameobject in gameObjects
 	for (int i = 0; i < gameObjects.size(); i++) {
 		gameObjects.at(i)->update();
+        
 	}
 	
    
