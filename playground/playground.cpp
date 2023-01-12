@@ -190,31 +190,31 @@ public:
     float distTravelled;
     float my_angle_x;
     float my_angle_y;
-	KGVShell(string name) {
+    KGVShell(string name) {
         std::cout << "creating shell with name: " << name << " and direction: " << std::endl;
         filename = name;
         std::cout << "initializing Vertexbuffer " << name << std::endl;
         initializeVertexbuffer();
-		my_angle_x = curr_angle_x;
-		my_angle_y = curr_angle_y;
+        my_angle_x = curr_angle_x;
+        my_angle_y = curr_angle_y;
         distTravelled = 0;
-		isActive = true;
-        
-        
-        
+        isActive = true;
+
+
+
     }
     void update() override {
-        
+
         distTravelled += speed;
-        
+
         //std::cout << "offset local: " << transformation[3][0] << " " << transformation[3][1] << " " << std::endl;
         initializeMVPTransformationBullet(my_angle_x, my_angle_y, distTravelled);
-        draw();	
+        draw();
         if (distTravelled > 50.0f) {
             deactivate();
         }
         //std::cout << distTravelled << std::endl;
-		
+
     }
     void deactivate() {
         std::cout << "Deactivating shell" << std::endl;
@@ -234,55 +234,58 @@ float fireCooldown = 3000.0f;
 
 int main(void)
 {
-	std::cout << "Hello World" << std::endl;
+    std::cout << "Hello World" << std::endl;
 
     std::cout << "initializing Window" << std::endl;
     //Initialize window
-bool windowInitialized = initializeWindow();
-if (!windowInitialized) return -1;
+    bool windowInitialized = initializeWindow();
+    if (!windowInitialized) return -1;
 
-std::cout << "Create Gameobjects" << std::endl;
-//create Gameojects
-lastUpdate = std::chrono::steady_clock::now();
-lastFired = std::chrono::steady_clock::now();
-
-glm::mat4 location = glm::mat4(1.0f);
-location[0][0] = 1.0; location[1][0] = 0.0; location[2][0] = 0.0; location[3][0] = 0.0;
-location[0][1] = 0.0; location[1][1] = 1.0; location[2][1] = 0.0; location[3][1] = 0.0;
-location[0][2] = 0.0; location[1][2] = 0.0; location[2][2] = 1.0; location[3][2] = 0.0;
-location[0][3] = 0.0; location[1][3] = 0.0; location[2][3] = 0.0; location[3][3] = 1.0;
-
-std::cout << "Pushing Gameobjects" << std::endl;
-
-
-
-std::shared_ptr<GameObject> turret = std::make_shared<Turret>("KGVturret");
-std::shared_ptr<GameObject> barrels = std::make_shared<Barrels>("KGVsecbatGuns");
-gameObjects.push_back(turret);
-gameObjects.push_back(barrels);
-
-
-
-
-
-
-/*//Initialize vertex buffer
-bool vertexbufferInitialized = initializeVertexbuffer();
-if (!vertexbufferInitialized) return -1;
-*/
-
-glEnable(GL_DEPTH_TEST);
-
-// Create and compile our GLSL program from the shaders
-programID = LoadShaders("SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader");
-
-
-
-//start animation loop until escape key is pressed
-std::cout << "Starting animation loop" << std::endl;
-do {
+    std::cout << "Create Gameobjects" << std::endl;
+    //create Gameojects
     lastUpdate = std::chrono::steady_clock::now();
-    updateAnimationLoop();
+    lastFired = std::chrono::steady_clock::now();
+
+    glm::mat4 location = glm::mat4(1.0f);
+    location[0][0] = 1.0; location[1][0] = 0.0; location[2][0] = 0.0; location[3][0] = 0.0;
+    location[0][1] = 0.0; location[1][1] = 1.0; location[2][1] = 0.0; location[3][1] = 0.0;
+    location[0][2] = 0.0; location[1][2] = 0.0; location[2][2] = 1.0; location[3][2] = 0.0;
+    location[0][3] = 0.0; location[1][3] = 0.0; location[2][3] = 0.0; location[3][3] = 1.0;
+
+    std::cout << "Pushing Gameobjects" << std::endl;
+
+
+
+    std::shared_ptr<GameObject> turret = std::make_shared<Turret>("KGVturret");
+    std::shared_ptr<GameObject> barrels = std::make_shared<Barrels>("KGVsecbatGuns");
+    gameObjects.push_back(turret);
+    gameObjects.push_back(barrels);
+
+
+
+
+
+
+    /*//Initialize vertex buffer
+    bool vertexbufferInitialized = initializeVertexbuffer();
+    if (!vertexbufferInitialized) return -1;
+    */
+
+    glEnable(GL_DEPTH_TEST);
+
+    // Create and compile our GLSL program from the shaders
+    programID = LoadShaders("SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader");
+
+
+
+    //start animation loop until escape key is pressed
+    std::cout << "Starting animation loop" << std::endl;
+    do {
+        if ((std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastUpdate).count()) > 5){
+        lastUpdate = std::chrono::steady_clock::now();
+        updateAnimationLoop();
+        }
+    
 	
 
 } // Check if the ESC key was pressed or the window was closed
